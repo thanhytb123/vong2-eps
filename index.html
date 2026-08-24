@@ -547,7 +547,17 @@
             }
 
             document.getElementById('study-card').innerHTML = `
-                <img src="${item.imageSrc}" class="sc-img" onerror="this.classList.remove('show')" onload="this.classList.add('show')">
+                <img src="${item.imageSrc}" class="sc-img" onerror="
+                    if (this.src.endsWith('.jpg') || this.src.endsWith('.JPG')) {
+                        this.src = this.src.substring(0, this.src.lastIndexOf('.')) + '.png';
+                    } else if (this.src.endsWith('.png') || this.src.endsWith('.PNG')) {
+                        this.src = this.src.substring(0, this.src.lastIndexOf('.')) + '.JPG';
+                    } else if (this.src.endsWith('.JPG')) {
+                        this.src = this.src.substring(0, this.src.lastIndexOf('.')) + '.PNG';
+                    } else {
+                        this.classList.remove('show');
+                    }
+                " onload="this.classList.add('show')">
                 <div class="sc-ko">${item.textHan}</div>
                 ${item.trans ? `<div class="sc-vi">${item.trans}</div>` : ''}
                 ${item.ansKo || item.ansVi ? `
