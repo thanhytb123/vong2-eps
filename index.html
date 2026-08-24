@@ -405,7 +405,7 @@
         const chuanHoaTen = (str) => {
             if (!str) return '';
             return str.toLowerCase()
-                .replace(/đ/g, 'd') // Đã sửa: Chuyển chữ đ thành d để tránh lỗi %C4%91 khi gọi ảnh
+                .replace(/đ/g, 'd') 
                 .normalize('NFD').replace(/[\u0300-\u036f]/g, '') 
                 .replace(/[\s|\/]+/g, '_')
                 .replace(/_+/g, '_')
@@ -446,17 +446,26 @@
                 const parsedData = [];
                 const categoryCounts = {};
 
+                let defaultSlug = 'cong_cu';
+                if (fileName.includes('Hoi_Dap')) defaultSlug = 'van_dap';
+                else if (fileName.includes('Tinh_Toan')) defaultSlug = 'tinh_toan';
+                else if (fileName.includes('Bien_Bao')) defaultSlug = 'bien_bao';
+
                 rows.forEach(tr => {
                     const cells = tr.querySelectorAll('td');
                     if (cells.length < 3) return; 
 
-                    const phanLoai = cells[1]?.innerText.trim() || '';
+                    let phanLoai = cells[1]?.innerText.trim() || '';
                     const textHan = cells[2]?.innerText.trim() || '';
                     const trans = cells[3]?.innerText.trim() || '';
                     const ansKo = cells[4]?.innerText.trim() || '';
                     const ansVi = cells[5]?.innerText.trim() || '';
 
-                    if (!phanLoai || phanLoai.toLowerCase().includes('phan_loai') || !textHan || textHan.toLowerCase().includes('noi_dung_han') || textHan.toLowerCase().includes('de_bai_han')) return;
+                    if (!phanLoai || phanLoai.toLowerCase().includes('phan_loai')) {
+                        phanLoai = defaultSlug;
+                    }
+
+                    if (!textHan || textHan.toLowerCase().includes('noi_dung_han') || textHan.toLowerCase().includes('de_bai_han')) return;
 
                     const slug = chuanHoaTen(phanLoai);
                     if (!categoryCounts[slug]) categoryCounts[slug] = 0;
