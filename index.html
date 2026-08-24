@@ -420,9 +420,11 @@
         const chuanHoaTen = (str) => {
             if (!str) return '';
             return str.toLowerCase()
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '') 
-                .replace(/[\s|\/]+/g, '_')
-                .replace(/_+/g, '_')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Bỏ hoàn toàn dấu tiếng Việt
+                .replace(/đ/g, 'd').replace(/Đ/g, 'd') // Chuẩn hóa chữ đ thành d
+                .replace(/[^a-z0-9]+/g, '_') // Thay thế mọi khoảng trắng và ký tự đặc biệt thành dấu gạch dưới '_'
+                .replace(/^_+|_+$/g, '') // Cắt bỏ gạch dưới thừa ở đầu/cuối
                 .trim();
         };
 
@@ -558,7 +560,6 @@
             const targetItem = document.querySelector(`.list-item[data-index="${index}"]`);
             if(targetItem) {
                 targetItem.classList.add('active');
-                // Đã xóa lệnh scrollIntoView để giữ khung màn hình học cố định không bị trượt theo
             }
 
             document.getElementById('study-card').innerHTML = `
