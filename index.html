@@ -405,6 +405,7 @@
         const chuanHoaTen = (str) => {
             if (!str) return '';
             return str.toLowerCase()
+                .replace(/đ/g, 'd') // Đã sửa: Chuyển chữ đ thành d để tránh lỗi %C4%91 khi gọi ảnh
                 .normalize('NFD').replace(/[\u0300-\u036f]/g, '') 
                 .replace(/[\s|\/]+/g, '_')
                 .replace(/_+/g, '_')
