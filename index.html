@@ -37,18 +37,39 @@
         .app-header { background: var(--bg-card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; padding: 0 24px; flex-wrap: wrap; }
         .header-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; color: var(--primary); padding: 15px 0; min-width: 200px; }
         .header-brand i { font-size: 22px; }
-        .header-right { display: flex; align-items: center; gap: 10px; min-width: 200px; justify-content: flex-end; }
-        @media (min-width: 1024px) { .header-right { display: flex; } }
 
         .main-nav { display: flex; gap: 8px; padding: 10px 0; overflow-x: auto; max-width: 100%; justify-content: center; flex: 1; scrollbar-width: none; }
-        .main-nav::-webkit-scrollbar { display: none; } /* Hide scrollbar for nav but keep functionality */
+        .main-nav::-webkit-scrollbar { display: none; }
         
         .tab-btn { padding: 8px 16px; border: none; cursor: pointer; background: transparent; border-radius: 8px; font-weight: 600; color: var(--text-muted); transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; font-size: 14px; white-space: nowrap; }
         .tab-btn:hover { background: #f8fafc; color: var(--text-main); }
         .tab-btn.active { background: var(--primary-light); color: var(--primary); box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.2); }
 
-        .donate-btn { background: #ec4899; color: white; border: none; padding: 6px 14px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .donate-btn:hover { background: #db2777; }
+        /* Nút Ủng hộ dạng Floating nổi ở góc dưới bên phải */
+        .floating-donate-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #ec4899;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(236, 72, 153, 0.35);
+            z-index: 999;
+            transition: all 0.2s ease;
+        }
+        .floating-donate-btn:hover {
+            background: #db2777;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(236, 72, 153, 0.45);
+        }
 
         .content-container { padding: 24px; max-width: 1300px; margin: auto; width: 100%; flex: 1; }
         .tab-content { display: none; animation: fadeIn 0.25s ease; }
@@ -269,9 +290,6 @@
         @media (max-width: 768px) {
             .app-header { padding: 10px 16px; }
             .header-brand { font-size: 16px; padding: 5px 0; min-width: auto; }
-            .header-right { min-width: auto; }
-            .donate-btn { font-size: 12px; padding: 6px 10px; }
-            .donate-btn span { display: none; } /* Chỉ hiện icon trên mobile cho gọn */
             
             .main-nav { padding: 5px 0; justify-content: flex-start; }
             .tab-btn { font-size: 13px; padding: 8px 12px; }
@@ -287,9 +305,10 @@
             .sc-ko { font-size: 20px; }
             .sc-vi, .sc-ans-container { font-size: 14px; }
             
-            .list-sidebar { height: 350px; } /* Giảm chiều cao list để dễ nhìn tổng thể */
-            
+            .list-sidebar { height: 350px; }
             .tele-card { padding: 16px; }
+            
+            .floating-donate-btn { bottom: 16px; right: 16px; padding: 10px 16px; font-size: 13px; }
         }
 
         @media (max-width: 480px) {
@@ -318,9 +337,6 @@
                 <i class="fas fa-hard-hat"></i> <span>Biển Báo</span>
             </button>
         </nav>
-        <div class="header-right">
-            <button class="donate-btn" id="open-donate-btn"><i class="fas fa-coffee"></i> <span>Ủng hộ</span></button>
-        </div>
     </header>
 
     <main class="content-container">
@@ -377,6 +393,11 @@
         </section>
     </main>
 
+    <!-- NÚT ỦNG HỘ NỔI Ở GÓC DƯỚI BÊN PHẢI -->
+    <button class="floating-donate-btn" id="open-donate-btn">
+        <i class="fas fa-coffee"></i> <span>Ủng hộ tác giả</span>
+    </button>
+
     <!-- MÀN HÌNH CHẠY CHỮ DẠNG POPUP -->
     <div id="reader-screen">
         <div class="teleprompter-box">
@@ -401,7 +422,7 @@
         </div>
     </div>
 
-    <!-- MODAL ỦNG HỘ QR (Dùng API VietQR tự động sinh mã theo STK) -->
+    <!-- MODAL ỦNG HỘ QR -->
     <div id="donate-modal">
         <div class="donate-content">
             <h3>Ủng Hộ Tác Giả</h3>
@@ -417,9 +438,11 @@
     </div>
 
     <script>
+        // Chuẩn hóa tên tiếng Việt có dấu/khoảng trắng thành dạng slug cong_cu
         const chuanHoaTen = (str) => {
             if (!str) return '';
             return str.toLowerCase()
+                .replace(/đ/g, 'd')
                 .normalize('NFD').replace(/[\u0300-\u036f]/g, '') 
                 .replace(/[\s|\/]+/g, '_')
                 .replace(/_+/g, '_')
@@ -470,6 +493,10 @@
                     const ansKo = cells[4]?.innerText.trim() || '';
                     const ansVi = cells[5]?.innerText.trim() || '';
 
+                    // Kiểm tra nếu trong dòng tr có thẻ img sẵn từ file HTML
+                    const imgTag = tr.querySelector('img');
+                    const extractedImg = imgTag ? imgTag.getAttribute('src') : '';
+
                     if (!phanLoai || phanLoai.toLowerCase().includes('phan_loai') || !textHan || textHan.toLowerCase().includes('noi_dung_han') || textHan.toLowerCase().includes('de_bai_han')) return;
 
                     const slug = chuanHoaTen(phanLoai);
@@ -479,7 +506,7 @@
                     parsedData.push({
                         phanLoai, textHan, trans, ansKo, ansVi,
                         audioSrc: `audio/${slug}_${categoryCounts[slug]}.mp3`,
-                        imageSrc: `image/${slug}_${categoryCounts[slug]}.jpg`
+                        imageSrc: extractedImg || `image/${slug}_${categoryCounts[slug]}.jpg`
                     });
                 });
                 return parsedData;
