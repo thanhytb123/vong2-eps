@@ -45,7 +45,6 @@
         .tab-btn:hover { background: #f8fafc; color: var(--text-main); }
         .tab-btn.active { background: var(--primary-light); color: var(--primary); box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.2); }
 
-        /* Nút Ủng hộ dạng Floating nổi ở góc dưới bên phải */
         .floating-donate-btn {
             position: fixed;
             bottom: 24px;
@@ -133,7 +132,6 @@
         body.hide-vi .sc-ans-vi { display: none !important; }
         body.hide-ans .sc-ans-container { display: none !important; }
 
-        /* Giao diện Tab Máy Nhắc Chữ */
         .tele-card { background: var(--bg-card); padding: 24px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); max-width: 600px; margin: 0 auto; }
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 8px; color: var(--text-main); }
@@ -145,7 +143,6 @@
         .settings-wrapper label { margin-bottom: 0; font-weight: 600; font-size: 14px; color: var(--text-main); }
         input[type="number"] { width: 100px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 15px; text-align: center; }
 
-        /* MÀN HÌNH CHẠY CHỮ DẠNG POPUP */
         #reader-screen {
             display: none;
             position: fixed;
@@ -234,7 +231,6 @@
         .pause-btn { background: #4B5563; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-size: 13px; cursor: pointer; font-weight: 600; }
         .pause-btn:hover { background: #6B7280; }
 
-        /* MODAL ỦNG HỘ QR */
         #donate-modal {
             display: none;
             position: fixed;
@@ -264,7 +260,6 @@
         .close-donate-btn { background: var(--text-muted); color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; width: 100%; }
         .close-donate-btn:hover { background: #475569; }
 
-        /* Đếm ngược */
         #countdown-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -286,28 +281,21 @@
             to { transform: scale(1.1); opacity: 1; }
         }
 
-        /* TỐI ƯU HÓA MOBILE */
         @media (max-width: 768px) {
             .app-header { padding: 10px 16px; }
             .header-brand { font-size: 16px; padding: 5px 0; min-width: auto; }
-            
             .main-nav { padding: 5px 0; justify-content: flex-start; }
             .tab-btn { font-size: 13px; padding: 8px 12px; }
-
             .content-container { padding: 16px; }
             .workspace { gap: 16px; }
-            
             .controls-panel { padding: 14px; flex-direction: column; align-items: stretch; gap: 12px; }
             .action-buttons, .toggles { justify-content: space-between; width: 100%; }
             .btn { flex: 1; justify-content: center; font-size: 12px; padding: 10px; }
-            
             .study-card { min-height: 250px; padding: 20px 16px; }
             .sc-ko { font-size: 20px; }
             .sc-vi, .sc-ans-container { font-size: 14px; }
-            
             .list-sidebar { height: 350px; }
             .tele-card { padding: 16px; }
-            
             .floating-donate-btn { bottom: 16px; right: 16px; padding: 10px 16px; font-size: 13px; }
         }
 
@@ -393,12 +381,10 @@
         </section>
     </main>
 
-    <!-- NÚT ỦNG HỘ NỔI Ở GÓC DƯỚI BÊN PHẢI -->
     <button class="floating-donate-btn" id="open-donate-btn">
         <i class="fas fa-coffee"></i> <span>Ủng hộ tác giả</span>
     </button>
 
-    <!-- MÀN HÌNH CHẠY CHỮ DẠNG POPUP -->
     <div id="reader-screen">
         <div class="teleprompter-box">
             <div id="countdown-overlay">
@@ -422,7 +408,6 @@
         </div>
     </div>
 
-    <!-- MODAL ỦNG HỘ QR -->
     <div id="donate-modal">
         <div class="donate-content">
             <h3>Ủng Hộ Tác Giả</h3>
@@ -438,7 +423,6 @@
     </div>
 
     <script>
-        // Chuẩn hóa tên tiếng Việt có dấu/khoảng trắng thành dạng slug cong_cu
         const chuanHoaTen = (str) => {
             if (!str) return '';
             return str.toLowerCase()
@@ -493,9 +477,20 @@
                     const ansKo = cells[4]?.innerText.trim() || '';
                     const ansVi = cells[5]?.innerText.trim() || '';
 
-                    // Kiểm tra nếu trong dòng tr có thẻ img sẵn từ file HTML
+                    // NHẬN DIỆN HÌNH ẢNH BẰNG LINK TRỰC TIẾP (Hỗ trợ thẻ img sẵn hoặc ô chứa link URL text ở cột thứ 6 hoặc cell cuối)
+                    let imgLink = '';
                     const imgTag = tr.querySelector('img');
-                    const extractedImg = imgTag ? imgTag.getAttribute('src') : '';
+                    if (imgTag) {
+                        imgLink = imgTag.getAttribute('src');
+                    } else if (cells.length > 6 && cells[6]) {
+                        imgLink = cells[6].innerText.trim();
+                    } else {
+                        // Kiểm tra nếu ô cuối cùng chứa link dạng http/https
+                        const lastCellText = cells[cells.length - 1]?.innerText.trim() || '';
+                        if (lastCellText.startsWith('http://') || lastCellText.startsWith('https://')) {
+                            imgLink = lastCellText;
+                        }
+                    }
 
                     if (!phanLoai || phanLoai.toLowerCase().includes('phan_loai') || !textHan || textHan.toLowerCase().includes('noi_dung_han') || textHan.toLowerCase().includes('de_bai_han')) return;
 
@@ -506,7 +501,7 @@
                     parsedData.push({
                         phanLoai, textHan, trans, ansKo, ansVi,
                         audioSrc: `audio/${slug}_${categoryCounts[slug]}.mp3`,
-                        imageSrc: extractedImg || `image/${slug}_${categoryCounts[slug]}.jpg`
+                        imageSrc: imgLink // Sử dụng trực tiếp link ảnh
                     });
                 });
                 return parsedData;
@@ -588,8 +583,14 @@
                 targetItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); 
             }
 
+            // Hiển thị ảnh nếu có link, ngược lại ẩn thẻ ảnh đi
+            let imgHTML = '';
+            if (item.imageSrc && item.imageSrc.trim() !== '') {
+                imgHTML = `<img src="${item.imageSrc}" class="sc-img show" onerror="this.classList.remove('show')">`;
+            }
+
             document.getElementById('study-card').innerHTML = `
-                <img src="${item.imageSrc}" class="sc-img" onerror="this.classList.remove('show')" onload="this.classList.add('show')">
+                ${imgHTML}
                 <div class="sc-ko">${item.textHan}</div>
                 ${item.trans ? `<div class="sc-vi">${item.trans}</div>` : ''}
                 ${item.ansKo || item.ansVi ? `
@@ -661,7 +662,6 @@
         const btnToggleAns = document.getElementById('toggle-ans');
         btnToggleAns.addEventListener('click', () => document.body.classList.toggle('hide-ans', !btnToggleAns.classList.toggle('active')));
 
-        // Modal Ủng Hộ QR
         const donateModal = document.getElementById('donate-modal');
         document.getElementById('open-donate-btn').addEventListener('click', () => { donateModal.style.display = 'flex'; });
         document.getElementById('close-donate-btn').addEventListener('click', () => { donateModal.style.display = 'none'; });
@@ -687,7 +687,6 @@
             });
         });
 
-        // --- MÁY NHẮC CHỮ ---
         const startBtn = document.getElementById('start-btn');
         const closeBtn = document.getElementById('close-btn');
         const pauseResumeBtn = document.getElementById('pause-resume-btn');
@@ -745,7 +744,6 @@
             htmlString += '<div style="height: 160px;"></div>';
 
             scrollContent.innerHTML = htmlString;
-
             readerScreen.style.display = 'flex';
             countdownOverlay.style.display = 'flex';
             scrollContent.style.transform = 'translateY(0px)';
@@ -764,10 +762,8 @@
                 } else {
                     clearInterval(countInterval);
                     countdownOverlay.style.display = 'none';
-                    
                     requestAnimationFrame(() => {
                         totalDistance = (processedLines.length - 1) * 60;
-
                         startTime = performance.now();
                         cancelAnimationFrame(animationFrameId);
                         animationFrameId = requestAnimationFrame(runStep);
