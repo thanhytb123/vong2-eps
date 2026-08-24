@@ -558,7 +558,7 @@
             const targetItem = document.querySelector(`.list-item[data-index="${index}"]`);
             if(targetItem) {
                 targetItem.classList.add('active');
-                targetItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); 
+                // Đã xóa lệnh scrollIntoView để giữ khung màn hình học cố định không bị trượt theo
             }
 
             document.getElementById('study-card').innerHTML = `
