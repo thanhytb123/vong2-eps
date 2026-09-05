@@ -78,6 +78,11 @@
 
         .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
         .toggles { display: flex; gap: 8px; }
+        .delay-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .delay-controls label { font-weight: 600; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+        .delay-controls input[type="number"] { width: 70px; padding: 7px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; text-align: center; }
+        .delay-controls .btn { background: #e2e8f0; color: var(--text-main); padding: 7px 12px; font-size: 12px; }
+        .delay-controls .btn:hover { background: #cbd5e1; }
         .toggle-btn { background: #e2e8f0; color: var(--text-muted); }
         .toggle-btn.active { background: var(--success); color: #fff; }
 
@@ -353,6 +358,11 @@
                             <button id="toggle-vi" class="btn toggle-btn active"><i class="fas fa-language"></i> Tiếng Việt</button>
                             <button id="toggle-ans" class="btn toggle-btn active"><i class="fas fa-check-circle"></i> Câu trả lời mẫu</button>
                         </div>
+                        <div class="delay-controls">
+                            <label for="replay-delay"><i class="fas fa-clock"></i> Delay qua câu (giây)</label>
+                            <input type="number" id="replay-delay" min="0" step="1" value="3">
+                            <button id="btn-reset-delay" class="btn" title="Khôi phục về giây mặc định"><i class="fas fa-undo"></i> Mặc định</button>
+                        </div>
                     </div>
 
                     <div id="study-card" class="study-card">
@@ -438,12 +448,17 @@
                     'Sản xuất chế tạo', 'Nông nghiệp', 'Lâm nghiệp', 
                     'Ngư nghiệp', 'Xây dựng', 'Dịch vụ', 'K khai thác mỏ', 'Đóng tàu'
                 ]
-            }
+            },
+            forcedSubTabs: {
+                'tab-vandap': ['An toàn lao động chuyên sâu']
+            },
+            defaultReplayDelay: 3000,
+            replayDelay: 3000
         };
 
         const fetchAndParseData = async (fileName) => {
             try {
-                const res = await fetch(fileName);
+                const res = await fetch(`${fileName}?v=${Date.now()}`, { cache: 'no-store' });
                 if (!res.ok) throw new Error(`Không tìm thấy file ${fileName}`);
                 const htmlText = await res.text();
                 const parser = new DOMParser();
@@ -486,13 +501,25 @@
             appState.currentData = data;
             const subNav = document.getElementById('sub-nav');
             let categories = appState.fixedSubTabs[targetId] || [...new Set(data.map(item => item.phanLoai))];
-            
+
+            const forced = appState.forcedSubTabs[targetId] || [];
+            forced.forEach(fc => {
+                const already = categories.some(cat => chuanHoaTen(cat) === chuanHoaTen(fc));
+                if (!already) categories.push(fc);
+            });
+
             if (categories.length === 0) {
                 subNav.innerHTML = '<span style="font-size:13px; color:#64748b;">Không có danh mục nào.</span>';
                 document.getElementById('list-container').innerHTML = '<div class="empty-state">Không có dữ liệu</div>';
                 document.getElementById('study-card').innerHTML = '<div class="empty-state">Trống</div>';
                 return;
             }
+
+            const filterByCategory = (cat) => appState.currentData.filter(item => {
+                const itemSlug = chuanHoaTen(item.phanLoai);
+                const catSlug = chuanHoaTen(cat);
+                return itemSlug === catSlug || itemSlug.includes(catSlug) || catSlug.includes(itemSlug);
+            });
 
             subNav.innerHTML = categories.map((cat, idx) => 
                 `<button class="sub-tab-btn ${idx === 0 ? 'active' : ''}" data-cat="${cat}">
@@ -507,21 +534,14 @@
                     targetBtn.classList.add('active');
                     stopAudio();
                     const selectedCat = targetBtn.dataset.cat;
-                    const filtered = appState.currentData.filter(item => 
-                        chuanHoaTen(item.phanLoai) === chuanHoaTen(selectedCat) || 
-                        item.phanLoai.toLowerCase().includes(selectedCat.toLowerCase())
-                    );
-                    renderList(filtered);
+                    renderList(filterByCategory(selectedCat));
                 });
             });
 
             const firstCat = categories[0];
-            const initialFiltered = appState.currentData.filter(item => 
-                chuanHoaTen(item.phanLoai) === chuanHoaTen(firstCat) || 
-                item.phanLoai.toLowerCase().includes(firstCat.toLowerCase())
-            );
-            renderList(initialFiltered);
+            renderList(filterByCategory(firstCat));
         };
+
 
         const renderList = (filteredData) => {
             appState.playlist = filteredData;
@@ -623,7 +643,7 @@
         };
 
         appState.audioPlayer.addEventListener('ended', () => {
-            appState.playTimeout = setTimeout(playNext, 3000);
+            appState.playTimeout = setTimeout(playNext, appState.replayDelay);
         });
 
         document.getElementById('btn-play-seq').addEventListener('click', () => { appState.isRandom = false; playAudio(appState.currentIndex > -1 ? appState.currentIndex : 0); });
@@ -635,6 +655,31 @@
 
         const btnToggleAns = document.getElementById('toggle-ans');
         btnToggleAns.addEventListener('click', () => document.body.classList.toggle('hide-ans', !btnToggleAns.classList.toggle('active')));
+
+        const replayDelayInput = document.getElementById('replay-delay');
+        const btnResetDelay = document.getElementById('btn-reset-delay');
+
+        const savedDelaySec = localStorage.getItem('eps_replay_delay_sec');
+        if (savedDelaySec !== null && !isNaN(parseFloat(savedDelaySec)) && parseFloat(savedDelaySec) >= 0) {
+            appState.replayDelay = Math.round(parseFloat(savedDelaySec) * 1000);
+            replayDelayInput.value = savedDelaySec;
+        } else {
+            replayDelayInput.value = appState.defaultReplayDelay / 1000;
+        }
+
+        replayDelayInput.addEventListener('input', () => {
+            const sec = parseFloat(replayDelayInput.value);
+            if (!isNaN(sec) && sec >= 0) {
+                appState.replayDelay = Math.round(sec * 1000);
+                localStorage.setItem('eps_replay_delay_sec', String(sec));
+            }
+        });
+
+        btnResetDelay.addEventListener('click', () => {
+            appState.replayDelay = appState.defaultReplayDelay;
+            replayDelayInput.value = appState.defaultReplayDelay / 1000;
+            localStorage.setItem('eps_replay_delay_sec', String(appState.defaultReplayDelay / 1000));
+        });
 
         const donateModal = document.getElementById('donate-modal');
         document.getElementById('open-donate-btn').addEventListener('click', () => { donateModal.style.display = 'flex'; });
