@@ -352,6 +352,7 @@
                         <div class="action-buttons">
                             <button id="btn-play-seq" class="btn primary"><i class="fas fa-play"></i> Phát Tuần Tự</button>
                             <button id="btn-play-rand" class="btn warning"><i class="fas fa-random"></i> Ngẫu Nhiên</button>
+                            <button id="btn-replay-current" class="btn warning" style="background: #0ea5e9;"><i class="fas fa-redo"></i> Nghe lại</button>
                             <button id="btn-stop-audio" class="btn danger"><i class="fas fa-stop"></i> Dừng</button>
                         </div>
                         <div class="toggles">
@@ -648,6 +649,13 @@
 
         document.getElementById('btn-play-seq').addEventListener('click', () => { appState.isRandom = false; playAudio(appState.currentIndex > -1 ? appState.currentIndex : 0); });
         document.getElementById('btn-play-rand').addEventListener('click', () => { appState.isRandom = true; playAudio(Math.floor(Math.random() * appState.playlist.length)); });
+        
+        // Bổ sung sự kiện nút Nghe lại câu hiện tại
+        document.getElementById('btn-replay-current').addEventListener('click', () => {
+            const targetIdx = appState.currentIndex > -1 ? appState.currentIndex : 0;
+            playAudio(targetIdx);
+        });
+
         document.getElementById('btn-stop-audio').addEventListener('click', stopAudio);
 
         const btnToggleVi = document.getElementById('toggle-vi');
